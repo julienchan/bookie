@@ -1,5 +1,5 @@
 {
-  "name": "bookie",
+  "name": "purescript-node-wai",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -7,30 +7,30 @@
     "output"
   ],
   "dependencies": {
-    "purescript-aff": "^3.0.0",
-    "purescript-arrays": "^4.0.1",
-    "purescript-control": "^3.0.0",
-    "purescript-data-default": "^0.1.0",
-    "purescript-datetime": "^3.0.0",
-    "purescript-eff": "^3.1.0",
-    "purescript-either": "^3.0.0",
-    "purescript-exceptions": "^3.0.0",
-    "purescript-foldable-traversable": "^3.0.0",
-    "purescript-foreign": "^4.0.0",
-    "purescript-js-date": "^4.0.0",
-    "purescript-lists": "^4.1.0",
-    "purescript-maybe": "^3.0.0",
-    "purescript-node-fs-aff": "^4.0.0",
-    "purescript-node-http": "^4.0.0",
-    "purescript-parsing": "^4.2.0",
-    "purescript-strings": "^3.1.0",
-    "purescript-uri": "^3.0.1",
-    "purescript-transformers": "^3.2.0",
-    "purescript-unfoldable": "^3.0.0"
+    "purescript-aff": "^5.0.0",
+    "purescript-arrays": "^5.0.0",
+    "purescript-control": "^4.0.0",
+    "purescript-datetime": "^4.0.0",
+    "purescript-effect": "^2.0.0",
+    "purescript-either": "^4.0.0",
+    "purescript-exceptions": "^4.0.0",
+    "purescript-foldable-traversable": "^4.0.0",
+    "purescript-foreign": "^5.0.0",
+    "purescript-js-date": "^6.0.0",
+    "purescript-lists": "^5.0.0",
+    "purescript-maybe": "^4.0.0",
+    "purescript-node-fs-aff": "^6.0.0",
+    "purescript-node-http": "^5.0.0",
+    "purescript-parsing": "^5.0.1",
+    "purescript-strings": "^4.0.0",
+    "purescript-uri": "https://github.com/doolse/purescript-uri.git#compiler/0.12",
+    "purescript-transformers": "^4.1.0",
+    "purescript-unfoldable": "^4.0.0",
+    "purescript-string-parsers": "^4.0.1"
   },
   "devDependencies": {
-    "purescript-test-unit": "^11.0.0",
-    "purescript-quickcheck": "^4.0.0",
-    "purescript-psci-support": "^3.0.0"
+    "purescript-test-unit": "^14.0.0",
+    "purescript-quickcheck": "^5.0.0",
+    "purescript-psci-support": "^4.0.0"
   }
 }

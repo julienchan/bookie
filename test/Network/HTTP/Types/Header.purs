@@ -2,16 +2,14 @@ module Test.Network.HTTP.Types.Header where
 
 import Prelude
 
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Exception (EXCEPTION)
-import Control.Monad.Eff.Random (RANDOM)
-
 import Data.List (List(Nil), (:))
 import Data.Maybe (Maybe(..), isJust, isNothing, fromMaybe)
-import Data.String as S
+import Data.String (toLower, toUpper) as S
+import Data.String.CodeUnits (fromCharArray, toCharArray) as S
 import Data.Newtype (class Newtype)
 import Data.NonEmpty ((:|))
+
+import Effect.Class (liftEffect)
 
 import Test.Unit (TestSuite, describe, it)
 import Test.Unit.Assert (shouldEqual)
@@ -51,11 +49,11 @@ testCaseInsensitive :: HeaderFieldString -> Boolean
 testCaseInsensitive (HeaderFieldString field) =
   HD.ci2Head (S.toLower field) == HD.ci2Head (S.toUpper field)
 
-main :: forall eff. TestSuite (console :: CONSOLE, random :: RANDOM, exception :: EXCEPTION | eff)
+main :: TestSuite
 main =
   describe "Network.HTTP.Types.Header" do
     it "case insensitive" do
-      liftEff $ quickCheck testCaseInsensitive
+      liftEffect $ quickCheck testCaseInsensitive
 
     it "can get the existsting key" do
       let ctype = HD.lookupHeader HD.ContentType testHeadersData

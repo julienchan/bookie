@@ -10,9 +10,7 @@ module Network.HTTP.Wai.File
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Monad.Aff (Aff)
-import Control.Monad.Eff (Eff)
-import Control.MonadZero (guard)
+import Control.Monad.Error.Class (throwError)
 
 import Data.Enum (fromEnum)
 import Data.Function.Uncurried (Fn3, runFn3)
@@ -22,6 +20,10 @@ import Data.Maybe (Maybe(..), fromMaybe, fromJust)
 import Data.Tuple (Tuple(..))
 import Data.Map as M
 import Partial.Unsafe (unsafePartial)
+
+import Effect (Effect)
+import Effect.Aff (Aff)
+import Effect.Exception (error)
 
 import Node.FS.Aff as F
 import Node.FS.Stats (Stats(..), isFile, modifiedTime)
@@ -55,17 +57,17 @@ instance showFileInfo :: Show FileInfo where
     <> show s.date
     <> "\n})"
 
-getFileInfo :: forall eff. FilePath -> Aff (fs :: F.FS | eff) (Tuple Stats FileInfo)
+getFileInfo :: FilePath -> Aff (Tuple Stats FileInfo)
 getFileInfo fp = do
   fs <- F.stat fp
-  guard $ isFile fs
-  let time = fromDateTime $ modifiedTime fs
-      date = formatHTTPDate time
+  when (not $ isFile fs) do
+    throwError (error "Not a file")
   pure $ Tuple fs $ FileInfo
     { name: fp
     , size: fileSizeInfo fs
-    , time: time
-    , date: date
+    -- todo dry the following up
+    , time: fromDateTime $ modifiedTime fs
+    , date: formatHTTPDate (fromDateTime $ modifiedTime fs)
     }
 
 fileSizeInfo :: Stats -> Int
@@ -156,12 +158,7 @@ addContentHeadersForFilePart hs (FilePart fp) = addContentHeaders hs off len siz
     len = fp.byteCount
     size = fp.size
 
-createReadStreamRange
-  :: forall eff
-   . FilePath
-  -> Int
-  -> Int
-  -> Eff (fs :: F.FS | eff) (Readable () (fs :: F.FS | eff))
+createReadStreamRange :: FilePath -> Int -> Int -> Effect (Readable ())
 createReadStreamRange path start end = runFn3 createReadStreamRangeImpl path start end
 
-foreign import createReadStreamRangeImpl :: forall eff. Fn3 FilePath Int Int (Eff (fs :: F.FS | eff) (Readable () (fs :: F.FS | eff)))
+foreign import createReadStreamRangeImpl :: Fn3 FilePath Int Int (Effect (Readable ()))

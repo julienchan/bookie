@@ -9,7 +9,6 @@ module Network.HTTP.Wai.Internal
 import Prelude
 
 import Data.Foldable (intercalate)
-import Data.URI.Query (Query, printQuery)
 import Data.Maybe (Maybe)
 import Data.List (List)
 
@@ -18,7 +17,8 @@ import Node.Encoding (Encoding)
 import Node.Stream (Readable)
 
 import Network.HTTP.Types as H
-import Node.HTTP (HTTP)
+
+import URI.Query (Query, print)
 
 newtype Request = Request
   { httpVersion :: H.HttpVersion
@@ -28,13 +28,13 @@ newtype Request = Request
   -- If no query string was specified, this should be empty. This value
   -- /will/ include the leading question mark.
   , rawQueryString :: String
-  -- query sortBy=name&page=2, it parsed using Data.URI.Query
+  -- query sortBy=name&page=2, it parsed using URI.Query
   , query :: Maybe Query
   -- Path info in individual pieces - the URL without a hostname/port and
   -- without a query string, split on forward slashes.
   , pathInfo :: List String
   , headers :: H.RequestHeaders
-  , body :: forall e. Readable () (http :: HTTP | e) }
+  , body :: Readable () }
 
 instance showRequest :: Show Request where
   show (Request s) = "Request {" <> intercalate "," fields <> "}"
@@ -44,14 +44,14 @@ instance showRequest :: Show Request where
         , "method " <> show s.method
         , "rawPathInfo " <> s.rawPathInfo
         , "rawQueryString " <> s.rawQueryString
-        , "query " <> show (printQuery <$> s.query)
+        , "query " <> show (print <$> s.query)
         , "headers " <> show s.headers
         , "body <Stream>"
         ]
 
-data Response eff
+data Response
   = ResponseFile H.Status H.ResponseHeaders FilePath (Maybe FilePart)
-  | ResponseStream H.Status H.ResponseHeaders (forall a. Readable a eff)
+  | ResponseStream H.Status H.ResponseHeaders (forall a. Readable a)
   | ResponseBuffer H.Status H.ResponseHeaders Buffer
   | ResponseString H.Status H.ResponseHeaders Encoding String
 
