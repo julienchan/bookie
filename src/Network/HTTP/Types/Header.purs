@@ -335,10 +335,10 @@ renderByteRanges xs = "bytes="
 parseByteRanges :: String -> Maybe (List ByteRange)
 parseByteRanges bs1 = do
   bs2 <- S.stripPrefix (S.Pattern "bytes=") bs1
-  Tuple r bs3 <- range bs2
+  Tuple r bs3 <- _range bs2
   ranges ((:) r) bs3
   where
-    range bs2 = do
+    _range bs2 = do
       Tuple i bs3 <- readInteger bs2
       if i < 0
         then Just $ Tuple (ByteRangeSuffix (negate i)) bs3
@@ -351,7 +351,7 @@ parseByteRanges bs1 = do
       | bs3 == "" = Just (front Nil)
       | otherwise = do
           bs4 <- S.stripPrefix (S.Pattern ",") bs3
-          Tuple r bs5 <- range bs4
+          Tuple r bs5 <- _range bs4
           ranges (front <<< ((:) r)) bs5
 
 readInteger :: String -> Maybe (Tuple Int String)

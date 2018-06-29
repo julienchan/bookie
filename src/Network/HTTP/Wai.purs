@@ -24,7 +24,7 @@ import Prelude
 
 import Data.Either (hush)
 import Data.List (List(..), (:), fromFoldable)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.String as S
 import Data.Tuple (Tuple)
 
@@ -42,7 +42,19 @@ import Text.Parsing.Parser (runParser)
 import URI.Query (Query)
 import URI.Query as Q
 
-import Network.HTTP.Types as H
+import Network.HTTP.Types
+  ( ByteRange(..), ByteRanges, Header(..), HeaderName(..), HttpVersion(..), Method(..), Redirection, RequestHeaders
+  , ResponseHeaders, Status(..), accept, acceptCharset, acceptEncoding, acceptLanguage, allow, authorization,
+  cacheControl, connection, contentEncoding, contentLanguage, contentLength, contentLocation, contentMD5, contentRange,
+  contentType, customString, date, expect, fromHeaders, getHeaderName, getHeaderValue, header2Tuple, http09, http10,
+  http11, lastModified, number2Redirection, number2Status, redirection2Status, renderByteRange, renderByteRanges,
+  status0, status100, status101, status200, status201, status202, status203, status204, status205, status206,
+  status2Number, status2Redirection, status300, status301, status302, status303, status304, status305, status307,
+  status400, status401, status402, status403, status404, status405, status406, status408, status410, status411,
+  status412, status413, status414, status415, status416, status417, status500, status501, status502, status503,
+  status504, status505, string2HTTPMethod, string2Head, string2HttpVersion
+  ) as H
+
 import Network.HTTP.Wai.Internal (Request(..), Response(..), FilePath, FilePart(..), ResponseReceived(..))
 
 

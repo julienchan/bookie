@@ -1,4 +1,4 @@
-module Main where
+module WaiMain where -- TODO: Fix problem of multiple "Main" modules in a client project in a more elegant manner.
 
 import Prelude
 
