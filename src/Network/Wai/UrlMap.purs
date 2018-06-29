@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.UrlMap where
+module Network.Wai.UrlMap where
 
 import Prelude
 
@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
 
 import Network.HTTP.Types (status404, contentType)
-import Network.HTTP.Wai (Application, Request(..), reqPathInfo, responseStrUtf8)
+import Network.Wai (Application, Request(..), reqPathInfo, responseStrUtf8)
 
 import URI.Query (print) as Query
 

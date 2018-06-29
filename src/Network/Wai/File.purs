@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.File
+module Network.Wai.File
   ( FileInfo(..)
   , getFileInfo
   , RspFileInfo(..)
@@ -33,8 +33,8 @@ import Node.Stream (Readable())
 import Network.HTTP.Types as H
 import Network.HTTP.Types.Header (parseByteRanges)
 import Network.HTTP.Types.Date (HTTPDate, parseHTTPDate, fromDateTime, formatHTTPDate)
-import Network.HTTP.Wai.Header (RequestHeaderKey(..), HeaderMap)
-import Network.HTTP.Wai.Internal (FilePart(..))
+import Network.Wai.Header (RequestHeaderKey(..), HeaderMap)
+import Network.Wai.Internal (FilePart(..))
 
 
 newtype FileInfo = FileInfo

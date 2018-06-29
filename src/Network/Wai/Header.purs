@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.Header where
+module Network.Wai.Header where
 
 import Prelude
 

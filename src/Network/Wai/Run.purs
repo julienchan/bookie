@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.Run
+module Network.Wai.Run
   ( handleRequest
   , module Exports
   ) where
@@ -12,11 +12,11 @@ import Effect.Exception (throwException)
 
 import Node.HTTP as NH
 
-import Network.HTTP.Wai (Application, toWaiRequest, reqHeaders)
-import Network.HTTP.Wai (Application, Middleware) as Exports
-import Network.HTTP.Wai.Header (keyedRequestHeader)
-import Network.HTTP.Wai.Response (sendResponse)
-import Network.HTTP.Wai.Internal (ResponseReceived(..))
+import Network.Wai (Application, toWaiRequest, reqHeaders)
+import Network.Wai (Application, Middleware) as Exports
+import Network.Wai.Header (keyedRequestHeader)
+import Network.Wai.Response (sendResponse)
+import Network.Wai.Internal (ResponseReceived(..))
 
 handleRequest :: Application -> NH.Request -> NH.Response -> Effect Unit
 handleRequest app req res = do

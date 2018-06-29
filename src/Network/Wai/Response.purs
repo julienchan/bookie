@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.Response where
+module Network.Wai.Response where
 
 import Prelude
 
@@ -25,12 +25,12 @@ import Node.FS.Stats (Stats, isDirectory)
 
 import Unsafe.Coerce (unsafeCoerce)
 
-import Network.HTTP.Wai (responseStatus, responseHeaders)
-import Network.HTTP.Wai.File (RspFileInfo(..), getFileInfo, addContentHeadersForFilePart,
+import Network.Wai (responseStatus, responseHeaders)
+import Network.Wai.File (RspFileInfo(..), getFileInfo, addContentHeadersForFilePart,
   conditionalRequest, createReadStreamRange)
 import Network.HTTP.Types as H
-import Network.HTTP.Wai.Header (HeaderMap)
-import Network.HTTP.Wai.Internal (Request(..), Response(..), FilePart(..))
+import Network.Wai.Header (HeaderMap)
+import Network.Wai.Internal (Request(..), Response(..), FilePart(..))
 
 -- | Sending a HTTP response to Node.js's Response according to 'Response'.
 -- Applications/middlewares MUST provide a proper 'H.ResponseHeaders'.

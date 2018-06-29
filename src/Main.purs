@@ -8,8 +8,8 @@ import Effect (Effect)
 import Effect.Console (log)
 
 import Node.HTTP (createServer, listen)
-import Network.HTTP.Wai as H
-import Network.HTTP.Wai.Run (handleRequest, Application)
+import Network.Wai as H
+import Network.Wai.Run (handleRequest, Application)
 
 simpleApp :: Application
 simpleApp _ respond = do

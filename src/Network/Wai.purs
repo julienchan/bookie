@@ -1,4 +1,4 @@
-module Network.HTTP.Wai
+module Network.Wai
   ( Application
   , Middleware
   , toWaiRequest
@@ -17,7 +17,7 @@ module Network.HTTP.Wai
   , modifyResponse
   , ifRequest
   , module H
-  , module Network.HTTP.Wai.Internal
+  , module Network.Wai.Internal
   ) where
 
 import Prelude
@@ -55,7 +55,7 @@ import Network.HTTP.Types
   status504, status505, string2HTTPMethod, string2Head, string2HttpVersion
   ) as H
 
-import Network.HTTP.Wai.Internal (Request(..), Response(..), FilePath, FilePart(..), ResponseReceived(..))
+import Network.Wai.Internal (Request(..), Response(..), FilePath, FilePart(..), ResponseReceived(..))
 
 
 type Application =

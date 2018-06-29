@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.Internal
+module Network.Wai.Internal
   ( Request(..)
   , Response(..)
   , FilePath
