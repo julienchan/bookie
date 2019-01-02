@@ -1,11 +1,6 @@
-module Network.HTTP.Wai.Response where
+module Network.Wai.Response where
 
 import Prelude
-
-import Control.Monad.Aff (Aff, attempt, makeAff)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Exception (Error)
 
 import Data.Array (deleteBy)
 import Data.Bifunctor (lmap)
@@ -14,6 +9,11 @@ import Data.Foldable (traverse_)
 import Data.Function (on)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), uncurry)
+
+import Effect (Effect)
+import Effect.Aff (Aff, attempt)
+import Effect.Class (liftEffect)
+import Effect.Exception (Error)
 
 import Node.HTTP as NH
 import Node.Buffer as B
@@ -25,24 +25,17 @@ import Node.FS.Stats (Stats, isDirectory)
 
 import Unsafe.Coerce (unsafeCoerce)
 
-import Network.HTTP.Wai (responseStatus, responseHeaders)
-import Network.HTTP.Wai.Effects (WaiEffects)
-import Network.HTTP.Wai.File (RspFileInfo(..), getFileInfo, addContentHeadersForFilePart,
+import Network.Wai (responseStatus, responseHeaders)
+import Network.Wai.File (RspFileInfo(..), getFileInfo, addContentHeadersForFilePart,
   conditionalRequest, createReadStreamRange)
 import Network.HTTP.Types as H
-import Network.HTTP.Wai.Header (HeaderMap)
-import Network.HTTP.Wai.Internal (Request(..), Response(..), FilePart(..))
+import Network.Wai.Header (HeaderMap)
+import Network.Wai.Internal (Request(..), Response(..), FilePart(..))
 
 -- | Sending a HTTP response to Node.js's Response according to 'Response'.
 -- Applications/middlewares MUST provide a proper 'H.ResponseHeaders'.
 -- so that inconsistency does not happen. No header is deleted by this function.
-sendResponse
-  :: forall eff
-   . NH.Response
-  -> Request
-  -> HeaderMap
-  -> Response (WaiEffects eff)
-  -> Aff (WaiEffects eff) Unit
+sendResponse :: NH.Response -> Request -> HeaderMap -> Response -> Aff Unit
 sendResponse nresp (Request req) reqkydhdr response = do
   if hasBody status
     then do
@@ -72,24 +65,23 @@ sendResponse nresp (Request req) reqkydhdr response = do
         | isHead     -> RspNoBody
         | otherwise  -> RspStream stream
 
-data Rsp eff
+data Rsp
   = RspNoBody
   | RspFile FilePath (Maybe FilePart) HeaderMap Boolean
   | RspBuffer B.Buffer
   | RspString Encoding String
-  | RspStream (forall a. ST.Readable a eff)
+  | RspStream (forall a. ST.Readable a)
 
 sendRsp
-  :: forall e
-   . NH.Response
+  :: NH.Response
   -> H.HttpVersion
   -> H.Status
   -> H.ResponseHeaders
-  -> Rsp (WaiEffects e)
-  -> Aff (WaiEffects e) (Tuple (Maybe H.Status) (Maybe Int))
+  -> Rsp
+  -> Aff (Tuple (Maybe H.Status) (Maybe Int))
 sendRsp nresp ver s hs RspNoBody = do
   let endCon = NH.responseAsStream nresp
-  liftEff do
+  liftEffect do
     NH.setStatusCode nresp (H.status2Number s)
     sendHeaders nresp hs
     ST.end endCon (pure unit)
@@ -97,7 +89,7 @@ sendRsp nresp ver s hs RspNoBody = do
   pure $ Tuple (Just s) Nothing
 sendRsp nresp ver s hs (RspStream streaRead) = do
   let pipedTo = NH.responseAsStream nresp
-  liftEff do
+  liftEffect do
     NH.setStatusCode nresp (H.status2Number s)
     sendHeaders nresp hs
   pipst <- attempt $ pipeStreamAff streaRead pipedTo
@@ -105,11 +97,11 @@ sendRsp nresp ver s hs (RspStream streaRead) = do
     Left err ->
       sendServerError500 nresp ver hs err
     Right _ -> do
-      liftEff $ ST.end pipedTo (pure unit)
+      liftEffect $ ST.end pipedTo (pure unit)
       pure $ Tuple (Just s) Nothing
 sendRsp nresp ver s hs (RspBuffer buff) = do
   let conn = NH.responseAsStream nresp
-  le <- liftEff do
+  le <- liftEffect do
     NH.setStatusCode nresp (H.status2Number s)
     sendHeaders nresp hs
     _ <- ST.write conn buff (pure unit)
@@ -117,7 +109,7 @@ sendRsp nresp ver s hs (RspBuffer buff) = do
     bufferByteLength buff
   pure $ Tuple (Just s) (Just le)
 sendRsp nresp ver s hs (RspString enc str) = do
-  strBuff <- liftEff $ B.fromString str enc
+  strBuff <- liftEffect $ B.fromString str enc
   sendRsp nresp ver s hs (RspBuffer strBuff)
 sendRsp nresp ver s hs (RspFile path (Just fpart@(FilePart part)) hm isHead) =
   let
@@ -137,8 +129,7 @@ sendRsp nresp ver _ hs (RspFile path Nothing hm isHead) = do
         WithBody s hs' beg len -> sendRspFile2XX nresp ver s hs' path beg len isHead (Just stats)
 
 sendRspFile2XX
-  :: forall e
-   . NH.Response
+  :: NH.Response
   -> H.HttpVersion
   -> H.Status
   -> H.ResponseHeaders
@@ -147,24 +138,24 @@ sendRspFile2XX
   -> Int
   -> Boolean
   -> Maybe Stats
-  -> Aff (WaiEffects e) (Tuple (Maybe H.Status) (Maybe Int))
+  -> Aff (Tuple (Maybe H.Status) (Maybe Int))
 sendRspFile2XX nresp ver s hs path beg len true _ = sendRsp nresp ver s hs RspNoBody
 sendRspFile2XX nresp ver s hs path beg len _ (Just stats) = do
   if isDirectory stats
     then sendRspFile404 nresp ver hs
     else do
-      liftEff do
+      liftEffect do
         NH.setStatusCode nresp (H.status2Number s)
         sendHeaders nresp hs
       let conn = NH.responseAsStream nresp
           end  = max beg (beg + len - 1)
-      rstream <- liftEff $ createReadStreamRange path beg end
+      rstream <- liftEffect $ createReadStreamRange path beg end
       pips <- attempt $ pipeStreamAff rstream conn
       case pips of
         Left err ->
           sendServerError500 nresp ver hs err
         Right _ -> do
-          liftEff $ ST.end conn (pure unit)
+          liftEffect $ ST.end conn (pure unit)
           pure $ Tuple (Just s) (Just len)
 sendRspFile2XX nresp ver s hs path beg len _ Nothing = do
   fseither <- attempt $ FSA.stat path
@@ -173,27 +164,25 @@ sendRspFile2XX nresp ver s hs path beg len _ Nothing = do
     Right st    -> sendRspFile2XX nresp ver s hs path beg len false (Just st)
 
 sendRspFile404
-  :: forall e
-   . NH.Response
+  :: NH.Response
   -> H.HttpVersion
   -> H.ResponseHeaders
-  -> Aff (WaiEffects e) (Tuple (Maybe H.Status) (Maybe Int))
+  -> Aff (Tuple (Maybe H.Status) (Maybe Int))
 sendRspFile404 nresp ver hd = do
-  liftEff $ clearHeaders nresp
+  liftEffect $ clearHeaders nresp
   sendRsp nresp ver H.status404 hd' (RspString UTF8 body)
   where
     body = "File not found\n"
     hd'  = replaceHeader H.ContentType "text/plain; charset=utf-8" hd
 
 sendServerError500
-  :: forall e
-   . NH.Response
+  :: NH.Response
   -> H.HttpVersion
   -> H.ResponseHeaders
   -> Error
-  -> Aff (WaiEffects e) (Tuple (Maybe H.Status) (Maybe Int))
+  -> Aff (Tuple (Maybe H.Status) (Maybe Int))
 sendServerError500 nresp ver hd _ = do
-  liftEff $ clearHeaders nresp
+  liftEffect $ clearHeaders nresp
   sendRsp nresp ver H.status500 hd' (RspString UTF8 body)
   where
     body = "Internal Server error"
@@ -207,32 +196,20 @@ hasBody s = sc /= 204
     sc = H.status2Number s
 
 -- | Send headers
-sendHeaders :: forall e. NH.Response -> H.ResponseHeaders -> Eff (http :: NH.HTTP | e) Unit
+sendHeaders :: NH.Response -> H.ResponseHeaders -> Effect Unit
 sendHeaders nresp = traverse_ $ uncurry (NH.setHeader nresp) <<< lmap show <<< H.header2Tuple
 
 replaceHeader :: H.HeaderName -> String -> H.ResponseHeaders -> H.ResponseHeaders
 replaceHeader k v hdrs = [H.Header k v] <> deleteBy ((==) `on` H.getHeaderName) (H.Header k v) hdrs
 
-pipeStreamAff
-  :: forall r w eff
-   . ST.Readable w eff
-  -> ST.Writable r eff
-  -> Aff eff Unit
-pipeStreamAff r w = makeAff \err suc -> do
-  ST.onError r err
-  ST.onEnd r do
-    suc unit
-  pipeNoEnd r w $> unit
+pipeStreamAff :: forall r w. ST.Readable w -> ST.Writable r -> Aff Unit
+pipeStreamAff r w = liftEffect $ void (ST.pipe r w)
 
-foreign import bufferByteLength :: forall e. B.Buffer -> Eff (buffer :: B.BUFFER | e) Int
+foreign import bufferByteLength :: B.Buffer -> Effect Int
 
-foreign import clearHeaders :: forall e. NH.Response -> Eff (http :: NH.HTTP | e) Unit
+foreign import clearHeaders :: NH.Response -> Effect Unit
 
 isHeaderSent :: NH.Response -> Boolean
 isHeaderSent = _.headersSent <<< unsafeCoerce
 
-foreign import pipeNoEnd
-  :: forall r w eff
-   . ST.Readable w eff
-  -> ST.Writable r eff
-  -> Eff eff (ST.Writable r eff)
+foreign import pipeNoEnd :: forall r w. ST.Readable w -> ST.Writable r -> Effect (ST.Writable r)

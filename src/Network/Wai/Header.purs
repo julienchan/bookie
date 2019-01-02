@@ -1,4 +1,4 @@
-module Network.HTTP.Wai.Header where
+module Network.Wai.Header where
 
 import Prelude
 
@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Enum (class Enum, class BoundedEnum, toEnum, fromEnum, Cardinality(..))
 
-import Network.HTTP.Types.Header (Header(..), HeaderName(..), RequestHeaders, ResponseHeaders)
+import Network.HTTP.Types.Header (Header(..), HeaderName(..), RequestHeaders)
 
 type HeaderMap = M.Map Int String
 
